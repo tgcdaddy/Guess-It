@@ -2,7 +2,7 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
 <meta name="color-scheme" content="dark">
 <meta name="theme-color" content="#07050f">
 <meta name="mobile-web-app-capable" content="yes">
@@ -20,7 +20,7 @@
     --text:#f1ecff; --muted:#bdb2e0; --accent:#f5c451; --accent2:#f59e0b; --accent-ink:#1c1400;
     --violet:#8b5cf6;
   }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box; touch-action:manipulation; -webkit-tap-highlight-color:transparent}
   html,body{margin:0}
   body{
     min-height:100vh; color:var(--text);
@@ -116,7 +116,9 @@
 
 
   /* compact list screen: fit on one screen without scrolling */
-  #screen-list #orb-list{--s:clamp(40px,8dvh,80px) !important; margin-block:calc(var(--s) * .12)}
+  main{position:relative}
+  .main-orb{--s:clamp(88px,19dvh,160px); --p:.5; margin:6px auto 4px}
+  #screen-list .ghost{position:absolute; top:0; inset-inline-start:0; z-index:2}
   #screen-list h1{font-size:26px; margin:0}
   #screen-list .hint{margin:2px 0 0; font-size:14px}
   #screen-list .ghost{min-height:36px; padding:4px 10px}
@@ -191,10 +193,10 @@
 <button class="snd" id="snd" type="button" aria-pressed="true"></button>
 
 <main>
+  <div class="orb main-orb" id="orb-main" aria-hidden="true"></div>
 
   <!-- Setup: language + list, both as radio buttons -->
   <section id="screen-menu">
-    <div class="orb" id="orb-menu" style="--s:132px;--p:.5" aria-hidden="true"></div>
     <h1 id="m-title"></h1>
     <p class="hint" id="m-sub"></p>
     <fieldset>
@@ -211,7 +213,6 @@
   <!-- List screen: used both at the start and at the end -->
   <section id="screen-list" hidden>
     <button class="ghost" id="btn-lists"></button>
-    <div class="orb" id="orb-list" style="--s:92px;--p:.4" aria-hidden="true"></div>
     <h1 id="list-title"></h1>
     <p class="hint" id="list-hint"></p>
     <div style="margin-top:12px"><button class="primary" id="start"></button></div>
@@ -227,7 +228,6 @@
       <span class="badge" id="step-label"></span>
     </div>
     <div class="bar" aria-hidden="true"><i id="bar"></i></div>
-    <div class="orb" id="orb-card" style="--s:68px" aria-hidden="true"></div>
     <p class="whisper" id="whisper" aria-live="polite"></p>
     <div class="panel">
       <div class="grid" id="card-grid"></div>
@@ -450,11 +450,9 @@ const Sound = (() => {
 const EYE = '<svg class="eye" viewBox="0 0 64 40" fill="none" aria-hidden="true">' +
   '<path d="M2 20 Q32 -5 62 20 Q32 45 2 20Z" stroke="rgba(255,236,170,.95)" stroke-width="2.2"/>' +
   '<circle cx="32" cy="20" r="9.5" fill="rgba(255,214,102,.92)"/><circle cx="32" cy="20" r="4.4" fill="#1a0b3a"/></svg>';
-['orb-menu', 'orb-list', 'orb-card'].forEach(id => {
-  $(id).innerHTML = `<div class="runes"></div><div class="ball">${EYE}</div><span class="ping"></span>`;
-});
+$('orb-main').innerHTML = `<div class="runes"></div><div class="ball">${EYE}</div><span class="ping"></span>`;
 function pingOrb(){
-  const o = $('orb-card');
+  const o = $('orb-main');
   o.classList.remove('go'); void o.offsetWidth; o.classList.add('go');
   setTimeout(() => o.classList.remove('go'), 1000);
 }
@@ -506,6 +504,7 @@ function pingOrb(){
 /* ---------- screens ---------- */
 function show(id){
   ['screen-menu','screen-list','screen-card'].forEach(s => { $(s).hidden = (s !== id); });
+  if (id !== 'screen-card') $('orb-main').style.setProperty('--p', '.5');
   const el = $(id);
   el.classList.remove('enter'); void el.offsetWidth; el.classList.add('enter');
   window.scrollTo(0, 0);
@@ -552,7 +551,7 @@ function renderCard(){
   $('card-title').textContent = title(cat());
   $('step-label').textContent = t().page(n);
   $('bar').style.width = `${(n / TOTAL) * 100}%`;
-  $('orb-card').style.setProperty('--p', (n / TOTAL).toFixed(2));
+  $('orb-main').style.setProperty('--p', (n / TOTAL).toFixed(2));
   $('whisper').textContent = t().whisper[step];
   $('q').textContent = t().q;
   $('q-hint').textContent = t().hint;
@@ -606,6 +605,8 @@ $('snd').onclick = () => { Sound.unlock(); Sound.setOn(!Sound.on); paintSnd(); i
 paintSnd();
 $('btn-next').onclick = next;
 $('btn-back').onclick = back;
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('dblclick', e => e.preventDefault());
 </script>
 
 </body>
